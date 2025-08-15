@@ -29,7 +29,7 @@ native-tls = true
 [tool.ruff]
 include = [
     "pyproject.toml",
-    "bueze-mittagstisch-notifier/**/*.py",
+    "bueze_mittagstisch_notifier/**/*.py",
     "tests/**/*.py",
 ]
 
@@ -43,7 +43,7 @@ select = ["E", "F", "I", "PD", "DTZ", "ASYNC", "S", "N", "PT"]
 "*" = ["E501"]
 
 [tool.mypy]
-files = ["bueze-mittagstisch-notifier", "tests"]
+files = ["bueze_mittagstisch_notifier", "tests"]
 strict = true
 implicit_reexport = true
 ignore_missing_imports = true
