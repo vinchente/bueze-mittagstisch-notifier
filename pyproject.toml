@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "Notifications of the weekly BüZe Mittagstisch menu"
 readme = "README.md"
 requires-python = "==3.12.*"
-dependencies = []
+dependencies = [
+    "httpx==0.28.*",
+    "pydantic==2.11.*"
+]
 
 [dependency-groups]
 dev = [
@@ -13,7 +16,7 @@ dev = [
     "ruff==0.6.*",
     "mypy==1.15.*",
     "invoke>=2.2.0",
-    "pytest-cov>=6.0.0",
+    "pytest-cov>=6.2.0",
     "pytest-socket>=0.7.0",
 ]
 
@@ -23,7 +26,7 @@ native-tls = true
 [tool.ruff]
 include = [
     "pyproject.toml",
-    "nx_dispatch_reporting/**/*.py",
+    "bueze-mittagstisch-notifier/**/*.py",
     "tests/**/*.py",
 ]
 
@@ -37,7 +40,7 @@ select = ["E", "F", "I", "PD", "DTZ", "ASYNC", "S", "N", "PT"]
 "*" = ["E501"]
 
 [tool.mypy]
-files = ["nx_dispatch_reporting", "tests"]
+files = ["bueze-mittagstisch-notifier", "tests"]
 strict = true
 implicit_reexport = true
 ignore_missing_imports = true
