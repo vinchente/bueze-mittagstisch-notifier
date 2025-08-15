@@ -1,0 +1,66 @@
+[project]
+name = "bueze-mittagstisch-notifier"
+version = "0.1.0"
+description = "Notifications of the weekly BüZe Mittagstisch menu"
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest==8.4.*",
+    "coverage==7.*",
+    "ruff==0.6.*",
+    "mypy==1.15.*",
+    "invoke>=2.2.0",
+    "pytest-cov>=6.0.0",
+    "pytest-socket>=0.7.0",
+]
+
+[tool.uv]
+native-tls = true
+
+[tool.ruff]
+include = [
+    "pyproject.toml",
+    "nx_dispatch_reporting/**/*.py",
+    "tests/**/*.py",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "PD", "DTZ", "ASYNC", "S", "N", "PT"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+# Allow assertions in tests
+"tests/*" = ["S101"]
+# Never enforce `E501` (line length violations).
+"*" = ["E501"]
+
+[tool.mypy]
+files = ["nx_dispatch_reporting", "tests"]
+strict = true
+implicit_reexport = true
+ignore_missing_imports = true
+#non_interactive = true
+enable_error_code = ["ignore-without-code"]
+plugins = ["pydantic.mypy"]
+install_types = true
+
+disallow_untyped_defs = true
+check_untyped_defs = true
+warn_return_any = true
+warn_unused_ignores = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+
+[tool.pytest.ini_options]
+addopts = "--disable-socket --allow-unix-socket"
+testpaths = "tests/"  # allows you to run `pytest` without an argument
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
