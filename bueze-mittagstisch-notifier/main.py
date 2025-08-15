@@ -3,8 +3,7 @@ from urllib.parse import urljoin
 import httpx
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-
-PAGE_URL = "https://bueze.de/unser-mittagstisch/"
+from config import settings
 
 
 def fetch_menu_png(page_url: str, output_path: str = "menu2.png") -> None:
@@ -39,7 +38,7 @@ def fetch_menu_png(page_url: str, output_path: str = "menu2.png") -> None:
 
 def main() -> None:
     print("Hello from bueze-mittagstisch-notifier!")
-    fetch_menu_png(PAGE_URL)
+    fetch_menu_png(page_url=settings.bueze.page_url)
 
 
 if __name__ == "__main__":
