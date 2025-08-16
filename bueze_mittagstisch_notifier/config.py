@@ -1,7 +1,7 @@
 import logging
 from typing import Optional, Union
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, SecretStr, model_validator
 from pydantic_settings import BaseSettings
 
 
@@ -37,12 +37,23 @@ class BuezeConfig(BaseModel):
     page_url: str
 
 
+class TelegramBotConfig(BaseModel):
+    name: str
+    token: SecretStr
+
+
+class TelegramConfig(BaseModel):
+    bot: TelegramBotConfig
+    channel_id: int
+
+
 class Settings(BaseSettings):
     """
     Each setting is read from the corresponding environment variable.
     """
 
     bueze: BuezeConfig
+    telegram: TelegramConfig
     logging: Optional[LoggingConfig] = None
 
     class Config:

@@ -47,6 +47,7 @@ dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "python-telegram-bot" },
 ]
 
 [package.dev-dependencies]
@@ -58,6 +59,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-socket" },
     { name = "ruff" },
+    { name = "types-pytz" },
     { name = "types-pyyaml" },
 ]
 
@@ -67,6 +69,7 @@ requires-dist = [
     { name = "httpx", specifier = "==0.28.*" },
     { name = "pydantic", specifier = "==2.11.*" },
     { name = "pydantic-settings", specifier = "==2.10.*" },
+    { name = "python-telegram-bot", specifier = "==22.*" },
 ]
 
 [package.metadata.requires-dev]
@@ -78,6 +81,7 @@ dev = [
     { name = "pytest-cov", specifier = ">=6.2.0" },
     { name = "pytest-socket", specifier = ">=0.7.0" },
     { name = "ruff", specifier = "==0.6.*" },
+    { name = "types-pytz" },
     { name = "types-pyyaml" },
 ]
 
@@ -344,6 +348,18 @@ wheels = [
 ]
 
 [[package]]
+name = "python-telegram-bot"
+version = "22.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/db/fc/0196e0d7ad247011a560788db204e0a28d76ab75b3d7c7131878f8fb5a06/python_telegram_bot-22.3.tar.gz", hash = "sha256:513d5ab9db96dcf25272dad0a726555e80edf60d09246a7d0d425b77115f5440", size = 1464513, upload-time = "2025-07-20T20:03:09.805Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/54/0955bd46a1e046169500e129c7883664b6675d580074d68823485e4d5de1/python_telegram_bot-22.3-py3-none-any.whl", hash = "sha256:88fab2d1652dbfd5379552e8b904d86173c524fdb9270d3a8685f599ffe0299f", size = 717115, upload-time = "2025-07-20T20:03:07.261Z" },
+]
+
+[[package]]
 name = "ruff"
 version = "0.6.9"
 source = { registry = "https://pypi.org/simple" }
@@ -384,6 +400,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/3f/f4/4a80cd6ef364b2e8b65b15816a843c0980f7a5a2b4dc701fc574952aa19f/soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a", size = 103418, upload-time = "2025-04-20T18:50:08.518Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/9c/0e6afc12c269578be5c0c1c9f4b49a8d32770a080260c333ac04cc1c832d/soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4", size = 36677, upload-time = "2025-04-20T18:50:07.196Z" },
+]
+
+[[package]]
+name = "types-pytz"
+version = "2025.2.0.20250809"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/07/e2/c774f754de26848f53f05defff5bb21dd9375a059d1ba5b5ea943cf8206e/types_pytz-2025.2.0.20250809.tar.gz", hash = "sha256:222e32e6a29bb28871f8834e8785e3801f2dc4441c715cd2082b271eecbe21e5", size = 10876, upload-time = "2025-08-09T03:14:17.453Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/db/d0/91c24fe54e565f2344d7a6821e6c6bb099841ef09007ea6321a0bac0f808/types_pytz-2025.2.0.20250809-py3-none-any.whl", hash = "sha256:4f55ed1b43e925cf851a756fe1707e0f5deeb1976e15bf844bcaa025e8fbd0db", size = 10095, upload-time = "2025-08-09T03:14:16.674Z" },
 ]
 
 [[package]]

@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 from urllib.parse import urljoin
 
 import httpx
@@ -12,7 +13,7 @@ class LinkTagNotFoundError(Exception):
     pass
 
 
-class BuezeAdapter:
+class BuezeMittagstischAdapter:
     def __init__(self, page_url: str) -> None:
         self._page_url = page_url
 
@@ -40,7 +41,7 @@ class BuezeAdapter:
         LOGGER.info(f"Found PNG URL: {png_url}")
         return png_url
 
-    def get_menu_binary_data(self) -> tuple[bytes, str]:
+    def get_menu_binary_data_and_file_name(self) -> tuple[bytes, str]:
         menu_url = self.get_menu_url()
         filename = menu_url.rsplit("/", 1)[-1]
 
@@ -49,3 +50,22 @@ class BuezeAdapter:
             png_resp.raise_for_status()
 
         return png_resp.content, filename
+
+    def get_and_save_menu(
+        self,
+        output_dir: Optional[str] = None,
+        file_name: Optional[str] = None,
+    ) -> None:
+        menu_binaries, original_file_name = self.get_menu_binary_data_and_file_name()
+
+        if not file_name:
+            file_name = original_file_name
+
+        if output_dir:
+            output_path = output_dir + "/" + file_name
+        else:
+            output_path = file_name
+
+        with open(output_path, "wb") as f:
+            f.write(menu_binaries)
+        LOGGER.info(f"Menu downloaded to {output_path}")
