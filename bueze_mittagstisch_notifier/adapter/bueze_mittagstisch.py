@@ -13,7 +13,7 @@ class LinkTagNotFoundError(Exception):
     pass
 
 
-class BuezeMittagstischAdapter:
+class BuezeAdapter:
     def __init__(self, page_url: str) -> None:
         self._page_url = page_url
 
