@@ -30,7 +30,7 @@ class Scheduler:
             now = datetime.now(tz=BERLIN)
             days_ahead = (7 - now.weekday()) % 7
             target = (now + timedelta(days=days_ahead)).replace(
-                hour=10, minute=0, second=0, microsecond=0
+                hour=10, minute=28, second=30, microsecond=0
             )
             if target <= now:
                 target += timedelta(days=7)
@@ -52,8 +52,10 @@ class Scheduler:
 
                     if filename not in self._sent_filenames:
                         LOGGER.info(f"New menu found: {filename}")
-                        self._telegram_notifier.send_mittagstisch_menu_notification(
-                            menu_image=menu_image
+                        await (
+                            self._telegram_notifier.send_mittagstisch_menu_notification(
+                                menu_image=menu_image
+                            )
                         )
                         self._sent_filenames.add(filename)
                         break
