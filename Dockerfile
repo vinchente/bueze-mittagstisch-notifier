@@ -2,8 +2,6 @@ FROM python:3.12.0-slim-bookworm AS stage1
 
 FROM stage1 AS builder
 
-RUN --mount=type=secret,id=PYPI_URL,env=PIP_INDEX_URL pip install uv
-
 WORKDIR /app
 
 COPY pyproject.toml uv.lock /app/
