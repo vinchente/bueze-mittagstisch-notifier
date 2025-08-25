@@ -1,20 +1,7 @@
-import logging
-from typing import Optional, Union
+from typing import Optional
 
 from pydantic import BaseModel, SecretStr, model_validator
 from pydantic_settings import BaseSettings
-
-
-def setup_logging_console(
-    *,
-    level: Union[int, str],
-) -> None:
-    logger = logging.getLogger()
-    logger.setLevel(level)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
-    logger.addHandler(console_handler)
 
 
 class ConsoleConfig(BaseModel):

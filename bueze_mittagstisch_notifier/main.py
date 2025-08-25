@@ -1,14 +1,13 @@
 import asyncio
 import logging
 
-from config import settings, setup_logging_console
-
 from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     BuezeAdapter,
 )
+from bueze_mittagstisch_notifier.config import settings
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
 from bueze_mittagstisch_notifier.scheduler.scheduler import Scheduler
-from bueze_mittagstisch_notifier.utils import get_filenames_path
+from bueze_mittagstisch_notifier.utils import get_filenames_path, setup_logging_console
 
 LOGGER = logging.getLogger(__name__)
 
