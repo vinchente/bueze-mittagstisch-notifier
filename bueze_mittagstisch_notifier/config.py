@@ -47,6 +47,10 @@ class TelegramConfig(BaseModel):
     channel_id: int
 
 
+class FilenamesStorageConfig(BaseModel):
+    name: str
+
+
 class Settings(BaseSettings):
     """
     Each setting is read from the corresponding environment variable.
@@ -55,6 +59,7 @@ class Settings(BaseSettings):
     bueze: BuezeConfig
     telegram: TelegramConfig
     logging: Optional[LoggingConfig] = None
+    filenames_storage: FilenamesStorageConfig
 
     class Config:
         env_nested_delimiter = "__"

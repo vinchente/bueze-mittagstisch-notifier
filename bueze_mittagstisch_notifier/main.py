@@ -8,6 +8,7 @@ from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
 )
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
 from bueze_mittagstisch_notifier.scheduler.scheduler import Scheduler
+from bueze_mittagstisch_notifier.utils import get_filenames_path
 
 LOGGER = logging.getLogger(__name__)
 
@@ -17,8 +18,11 @@ def main() -> None:
 
     bueze_adapter = BuezeAdapter(page_url=settings.bueze.page_url)
     telegram_notifier = TelegramNotifier(telegram_config=settings.telegram)
+
     scheduler = Scheduler(
-        bueze_adapter=bueze_adapter, telegram_notifier=telegram_notifier
+        bueze_adapter=bueze_adapter,
+        telegram_notifier=telegram_notifier,
+        filenames_path=get_filenames_path(settings.filenames_storage.name),
     )
 
     asyncio.run(scheduler.run())
