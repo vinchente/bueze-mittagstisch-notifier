@@ -5,11 +5,9 @@ FROM stage1 AS builder
 WORKDIR /app
 
 COPY pyproject.toml uv.lock /app/
-# Install application dependencies
-RUN #apt-get update && apt-get install -y pkg-config python3-dev default-libmysqlclient-dev build-essential
-RUN --mount=type=secret,id=PYPI_URL,env=UV_DEFAULT_INDEX \
-    --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev
+# Install uv and dependencies
+RUN pip install --no-cache-dir uv
+RUN uv sync --locked --no-dev
 
 
 FROM stage1
