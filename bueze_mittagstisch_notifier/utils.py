@@ -18,4 +18,10 @@ def setup_logging_console(
 
     console_handler = logging.StreamHandler()
     console_handler.setLevel(level)
+
+    formatter = logging.Formatter(
+        fmt="%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    console_handler.setFormatter(formatter)
+
     logger.addHandler(console_handler)
