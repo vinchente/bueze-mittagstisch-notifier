@@ -17,6 +17,16 @@ class BuezeAdapter:
     def __init__(self, page_url: str) -> None:
         self._page_url = page_url
 
+    def get_menu_binary_data_and_file_name(self) -> tuple[bytes, str]:
+        menu_url = self.get_menu_url()
+        filename = menu_url.rsplit("/", 1)[-1]
+
+        with httpx.Client() as client:
+            png_resp = client.get(menu_url)
+            png_resp.raise_for_status()
+
+        return png_resp.content, filename
+
     def get_menu_url(self) -> str:
         with httpx.Client() as client:
             resp = client.get(self._page_url)
@@ -40,16 +50,6 @@ class BuezeAdapter:
         png_url = urljoin(self._page_url, href)
         LOGGER.info(f"Found PNG URL: {png_url}")
         return png_url
-
-    def get_menu_binary_data_and_file_name(self) -> tuple[bytes, str]:
-        menu_url = self.get_menu_url()
-        filename = menu_url.rsplit("/", 1)[-1]
-
-        with httpx.Client() as client:
-            png_resp = client.get(menu_url)
-            png_resp.raise_for_status()
-
-        return png_resp.content, filename
 
     def get_and_save_menu(
         self,
