@@ -13,6 +13,7 @@ def load_seen_files(filenames_path: Path) -> set[str]:
 
 
 def save_seen_files(filenames: set[str], filenames_path: Path) -> None:
+    filenames_path.parent.mkdir(parents=True, exist_ok=True)
     with open(filenames_path, "w", encoding="utf-8") as f:
         json.dump(list(filenames), f, indent=2)
 
