@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import httpx
@@ -10,6 +11,8 @@ from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     LinkTagNotFoundError,
 )
 from bueze_mittagstisch_notifier.config import settings
+
+LOGGER = logging.getLogger(__name__)
 
 TEST_MENU_URL = "https://bueze-test.de/menu.png"
 TEST_MENU_FILENAME = "menu.png"

@@ -1,3 +1,4 @@
+import logging
 from unittest.mock import AsyncMock
 
 import pytest
@@ -7,6 +8,8 @@ from bueze_mittagstisch_notifier.config import (
     settings,
 )
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
+
+LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.asyncio
