@@ -1,7 +1,7 @@
 from typing import Optional
 
 from pydantic import BaseModel, SecretStr, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class ConsoleConfig(BaseModel):
@@ -48,9 +48,9 @@ class Settings(BaseSettings):
     logging: Optional[LoggingConfig] = None
     filenames_storage: FilenamesStorageConfig
 
-    class Config:
-        env_nested_delimiter = "__"
-        env_parse_none_str = "None"
+    model_config = SettingsConfigDict(
+        env_nested_delimiter="__", env_parse_none_str="None"
+    )
 
 
 settings = Settings()
