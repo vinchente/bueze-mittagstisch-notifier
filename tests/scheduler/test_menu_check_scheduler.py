@@ -7,10 +7,12 @@ import pytest
 
 from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import BuezeAdapter
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
-from bueze_mittagstisch_notifier.scheduler.scheduler import Scheduler
+from bueze_mittagstisch_notifier.scheduler.menu_check_scheduler import (
+    MenuCheckScheduler,
+)
 from bueze_mittagstisch_notifier.storage.filenames import load_seen_files
 
-original_sleep = asyncio.sleep
+original_async_sleep = asyncio.sleep
 
 
 @pytest.fixture
@@ -44,7 +46,7 @@ def tmp_seen_filenames(tmp_path: Path) -> Path:
 
 
 @pytest.mark.asyncio
-async def test_scheduler_run(
+async def test_menu_check_scheduler_run(
     mock_bueze_adapter: Mock,
     mock_telegram_notifier: AsyncMock,
     tmp_seen_filenames: Path,
@@ -52,15 +54,21 @@ async def test_scheduler_run(
 ) -> None:
     caplog.set_level("INFO")
 
-    scheduler = Scheduler(
+    menu_check_scheduler = MenuCheckScheduler(
         bueze_adapter=mock_bueze_adapter,
         telegram_notifier=mock_telegram_notifier,
         filenames_path=tmp_seen_filenames,
         check_interval=0.001,
     )
 
-    with patch("asyncio.sleep", new=lambda _: original_sleep(0)):
-        await scheduler.run(max_iterations=2)
+    with (
+        patch(
+            "bueze_mittagstisch_notifier.scheduler.menu_check_scheduler.sleep",
+            return_value=None,
+        ),
+        patch("asyncio.sleep", new=lambda _: original_async_sleep(0)),
+    ):
+        await menu_check_scheduler.run(max_iterations=2)
 
     sent_menus = [
         call.kwargs["menu_image"]
