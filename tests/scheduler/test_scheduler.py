@@ -1,0 +1,76 @@
+import asyncio
+from pathlib import Path
+from typing import Iterator
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
+
+from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import BuezeAdapter
+from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
+from bueze_mittagstisch_notifier.scheduler.scheduler import Scheduler
+from bueze_mittagstisch_notifier.storage.filenames import load_seen_files
+
+original_sleep = asyncio.sleep
+
+
+@pytest.fixture
+def mock_menu_sequence() -> Iterator[tuple[bytes, str]]:
+    menus_in_order_of_appearance = [
+        (b"fake-png-bytes-1", "menu-1.png"),
+        (b"fake-png-bytes-1", "menu-1.png"),
+        (b"fake-png-bytes-2", "menu-2.png"),
+    ]
+    return iter(menus_in_order_of_appearance)
+
+
+@pytest.fixture
+def mock_bueze_adapter(mock_menu_sequence: Iterator[tuple[bytes, str]]) -> Mock:
+    mock_adapter = Mock(spec=BuezeAdapter)
+    mock_adapter.get_menu_binary_data_and_file_name.side_effect = lambda: next(
+        mock_menu_sequence
+    )
+
+    return mock_adapter
+
+
+@pytest.fixture
+def mock_telegram_notifier() -> AsyncMock:
+    return AsyncMock(spec=TelegramNotifier)
+
+
+@pytest.fixture
+def tmp_seen_filenames(tmp_path: Path) -> Path:
+    return tmp_path / "seen_files.json"
+
+
+@pytest.mark.asyncio
+async def test_scheduler_run(
+    mock_bueze_adapter: Mock,
+    mock_telegram_notifier: AsyncMock,
+    tmp_seen_filenames: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    caplog.set_level("INFO")
+
+    scheduler = Scheduler(
+        bueze_adapter=mock_bueze_adapter,
+        telegram_notifier=mock_telegram_notifier,
+        filenames_path=tmp_seen_filenames,
+        check_interval=0.001,
+    )
+
+    with patch("asyncio.sleep", new=lambda _: original_sleep(0)):
+        await scheduler.run(max_iterations=2)
+
+    sent_menus = [
+        call.kwargs["menu_image"]
+        for call in mock_telegram_notifier.send_mittagstisch_menu_notification.await_args_list
+    ]
+    assert sent_menus == [b"fake-png-bytes-1", b"fake-png-bytes-2"]
+
+    seen = load_seen_files(tmp_seen_filenames)
+    assert seen == {"menu-1.png", "menu-2.png"}
+
+    assert "New menu found: menu-1.png" in caplog.text
+    assert "menu-1.png already sent, checking again later..." in caplog.text
+    assert "New menu found: menu-2.png" in caplog.text

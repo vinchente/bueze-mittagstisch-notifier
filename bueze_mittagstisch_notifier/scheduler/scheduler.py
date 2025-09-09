@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -24,7 +25,7 @@ class Scheduler:
         bueze_adapter: BuezeAdapter,
         telegram_notifier: TelegramNotifier,
         filenames_path: Path,
-        check_interval: int = 300,
+        check_interval: float = 300,
     ) -> None:
         self._bueze_adapter = bueze_adapter
         self._telegram_notifier = telegram_notifier
