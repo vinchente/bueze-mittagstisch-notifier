@@ -31,23 +31,10 @@ class Scheduler:
         self._filenames_path = filenames_path
         self._check_interval = check_interval
 
-    async def wait_until_monday_10am(self) -> None:
-        while True:
-            now = datetime.now(tz=BERLIN)
-            days_ahead = (7 - now.weekday()) % 7
-            target = (now + timedelta(days=days_ahead)).replace(
-                hour=10, minute=0, second=0, microsecond=0
-            )
-            if target <= now:
-                target += timedelta(days=7)
-            wait_seconds = (target - now).total_seconds()
-            LOGGER.info(f"Sleeping until {target}...")
-            await asyncio.sleep(wait_seconds)
-            return
-
-    async def run(self) -> None:
-        while True:
-            await self.wait_until_monday_10am()
+    async def run(self, max_iterations: Optional[int] = None) -> None:
+        iterations = 0
+        while max_iterations is None or iterations < max_iterations:
+            await _wait_until_monday_10am()
             LOGGER.info("Checking for new menu...")
 
             while True:
@@ -75,3 +62,20 @@ class Scheduler:
                     LOGGER.error(f"Network error: {e}, retrying...")
 
                 await asyncio.sleep(self._check_interval)
+
+            iterations += 1
+
+
+async def _wait_until_monday_10am() -> None:
+    while True:
+        now = datetime.now(tz=BERLIN)
+        days_ahead = (7 - now.weekday()) % 7
+        target = (now + timedelta(days=days_ahead)).replace(
+            hour=10, minute=0, second=0, microsecond=0
+        )
+        if target <= now:
+            target += timedelta(days=7)
+        wait_seconds = (target - now).total_seconds()
+        LOGGER.info(f"Sleeping until {target}...")
+        await asyncio.sleep(wait_seconds)
+        return
