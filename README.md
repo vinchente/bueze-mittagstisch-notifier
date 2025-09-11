@@ -11,5 +11,5 @@ You can run commands in the virtualenv with `uv run ...` or activate the
 virtualenv directly with `source .venv/bin/activate`.
 
 BüZe Mittagstisch Notifier itself is also configured via environment variables.
-There is a list of the needed variables in `config/example.env`.
+There is a list of the needed variables in `development/example.env`.
 You can copy this file to `.env` and fill in the blank variables.
