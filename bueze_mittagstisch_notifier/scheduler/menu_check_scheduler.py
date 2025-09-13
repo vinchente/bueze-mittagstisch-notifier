@@ -9,7 +9,10 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import BuezeAdapter
+from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
+    BuezeAdapter,
+    LinkTagNotFoundError,
+)
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
 from bueze_mittagstisch_notifier.storage.filenames import (
     load_seen_files,
@@ -58,33 +61,33 @@ class MenuCheckScheduler:
     async def _check_continuously_for_new_menu(self) -> None:
         while True:
             try:
-                menu_image, filename = (
-                    self._bueze_adapter.get_menu_binary_data_and_file_name()
-                )
+                menu_data = self._bueze_adapter.get_menu_data()
 
-                if filename not in load_seen_files(filenames_path=self._filenames_path):
-                    LOGGER.info(f"New menu found: {filename}")
-                    await self._send_menu_notification_and_update_filenames(
-                        filename=filename, menu_image=menu_image
+                if menu_data.filename not in load_seen_files(
+                    filenames_path=self._filenames_path
+                ):
+                    LOGGER.info(f"New menu found: {menu_data.filename}")
+
+                    await self._telegram_notifier.send_mittagstisch_menu_notification(
+                        menu_image=menu_data.content
+                    )
+                    update_seen_filenames(
+                        filename=menu_data.filename, filenames_path=self._filenames_path
                     )
                     break
                 else:
-                    LOGGER.info(f"{filename} already sent, checking again later...")
+                    LOGGER.info(
+                        f"{menu_data.filename} already sent, checking again later..."
+                    )
 
+            except LinkTagNotFoundError as e:
+                LOGGER.error(f"LinkTagNotFoundError: {e}")
             except httpx.RequestError as e:
                 LOGGER.error(f"Network error: {e}, retrying...")
             except httpx.HTTPStatusError as e:
                 LOGGER.warning(f"HTTP error: {e.response.status_code}")
 
             await asyncio.sleep(self._check_interval_seconds)
-
-    async def _send_menu_notification_and_update_filenames(
-        self, filename: str, menu_image: bytes
-    ) -> None:
-        await self._telegram_notifier.send_mittagstisch_menu_notification(
-            menu_image=menu_image
-        )
-        update_seen_filenames(filename=filename, filenames_path=self._filenames_path)
 
 
 def _wait_until_next_time_to_start_check_loop() -> None:

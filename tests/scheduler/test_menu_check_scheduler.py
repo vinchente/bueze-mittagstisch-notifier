@@ -5,7 +5,10 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import BuezeAdapter
+from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
+    BuezeAdapter,
+    MenuData,
+)
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
 from bueze_mittagstisch_notifier.scheduler.menu_check_scheduler import (
     MenuCheckScheduler,
@@ -16,21 +19,34 @@ original_async_sleep = asyncio.sleep
 
 
 @pytest.fixture
-def mock_menu_sequence() -> Iterator[tuple[bytes, str]]:
+def mock_menu_sequence() -> Iterator[MenuData]:
     menus_in_order_of_appearance = [
-        (b"fake-png-bytes-1", "menu-1.png"),
-        (b"fake-png-bytes-1", "menu-1.png"),
-        (b"fake-png-bytes-2", "menu-2.png"),
+        MenuData(
+            url="https://bueze-test.de/menu-1.png",
+            filename="menu-1.png",
+            last_modified="Fri, 5 Sep 2025 10:15:30 GMT",
+            content=b"fake-png-bytes-1",
+        ),
+        MenuData(
+            url="https://bueze-test.de/menu-1.png",
+            filename="menu-1.png",
+            last_modified="Fri, 5 Sep 2025 10:15:30 GMT",
+            content=b"fake-png-bytes-1",
+        ),
+        MenuData(
+            url="https://bueze-test.de/menu-1.png",
+            filename="menu-2.png",
+            last_modified="Fri, 12 Sep 2025 10:15:30 GMT",
+            content=b"fake-png-bytes-2",
+        ),
     ]
     return iter(menus_in_order_of_appearance)
 
 
 @pytest.fixture
-def mock_bueze_adapter(mock_menu_sequence: Iterator[tuple[bytes, str]]) -> Mock:
+def mock_bueze_adapter(mock_menu_sequence: Iterator[MenuData]) -> Mock:
     mock_adapter = Mock(spec=BuezeAdapter)
-    mock_adapter.get_menu_binary_data_and_file_name.side_effect = lambda: next(
-        mock_menu_sequence
-    )
+    mock_adapter.get_menu_data.side_effect = lambda: next(mock_menu_sequence)
 
     return mock_adapter
 

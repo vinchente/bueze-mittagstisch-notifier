@@ -9,6 +9,7 @@ from _pytest.monkeypatch import MonkeyPatch
 from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     BuezeAdapter,
     LinkTagNotFoundError,
+    MenuData,
 )
 from bueze_mittagstisch_notifier.config import settings
 
@@ -16,10 +17,11 @@ LOGGER = logging.getLogger(__name__)
 
 TEST_MENU_URL = "https://bueze-test.de/menu.png"
 TEST_MENU_FILENAME = "menu.png"
+TEST_MENU_LAST_MODIFIED = "Fri, 12 Sep 2025 10:15:30 GMT"
 
 
 @respx.mock
-def test_get_menu_binary_data_and_file_name(test_menu_image: bytes) -> None:
+def test_get_menu_data(test_menu_image: bytes) -> None:
     adapter = BuezeAdapter(page_url=settings.bueze.page_url)
 
     respx.get(settings.bueze.page_url).mock(
@@ -29,13 +31,17 @@ def test_get_menu_binary_data_and_file_name(test_menu_image: bytes) -> None:
     )
 
     respx.get(TEST_MENU_URL).mock(
-        return_value=httpx.Response(200, content=test_menu_image)
+        return_value=httpx.Response(
+            200,
+            content=test_menu_image,
+            headers={"Last-Modified": TEST_MENU_LAST_MODIFIED},
+        )
     )
 
-    binary_data, filename = adapter.get_menu_binary_data_and_file_name()
+    result_menu_data = adapter.get_menu_data()
 
-    assert binary_data == test_menu_image
-    assert filename == TEST_MENU_FILENAME
+    assert result_menu_data.content == test_menu_image
+    assert result_menu_data.filename == TEST_MENU_FILENAME
 
 
 @respx.mock
@@ -57,8 +63,13 @@ def test_get_and_save_menu(
 
     monkeypatch.setattr(
         adapter,
-        "get_menu_binary_data_and_file_name",
-        lambda: (test_menu_image, TEST_MENU_FILENAME),
+        "get_menu_data",
+        lambda: MenuData(
+            url=TEST_MENU_URL,
+            filename=TEST_MENU_FILENAME,
+            last_modified=TEST_MENU_LAST_MODIFIED,
+            content=test_menu_image,
+        ),
     )
 
     adapter.get_and_save_menu(output_dir=str(tmp_path))
