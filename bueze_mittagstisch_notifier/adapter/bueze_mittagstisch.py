@@ -67,7 +67,6 @@ class BuezeAdapter:
             raise RuntimeError("Found <a> tag without a valid href")
 
         png_url = urljoin(self._page_url, href)
-        LOGGER.info(f"Found PNG URL: {png_url}")
         return png_url
 
     def get_and_save_menu(
