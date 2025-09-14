@@ -37,12 +37,11 @@ class BuezeAdapter:
         self._page_url = page_url
 
     def get_last_menu_upload_time(self) -> datetime:
+        menu_url = self.get_menu_url()
         with httpx.Client() as client:
-            head_resp = client.head(self._page_url)
-            last_modified_string = head_resp.headers.get("last-modified")
-        return _parse_last_updated_string_to_datetime(
-            last_modified_string=last_modified_string
-        )
+            head_resp = client.head(menu_url)
+            last_modified_string = head_resp.headers.get("Last-Modified")
+        return parse_http_date_to_datetime(last_modified_string=last_modified_string)
 
     def get_menu_data(self) -> MenuData:
         menu_url = self.get_menu_url()

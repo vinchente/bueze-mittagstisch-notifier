@@ -21,6 +21,31 @@ TEST_MENU_LAST_MODIFIED = "Fri, 12 Sep 2025 10:15:30 GMT"
 
 
 @respx.mock
+def test_get_last_menu_upload_time() -> None:
+    respx.get(settings.bueze.page_url).mock(
+        return_value=httpx.Response(
+            200, text='<html><a href="menu.png">Download</a></html>'
+        )
+    )
+
+    respx.head(TEST_MENU_URL).mock(
+        return_value=httpx.Response(
+            200,
+            headers={"Last-Modified": TEST_MENU_LAST_MODIFIED},
+        )
+    )
+
+    adapter = BuezeAdapter(page_url=settings.bueze.page_url)
+
+    most_recent_menu_upload_time_result = adapter.get_last_menu_upload_time()
+
+    most_recent_menu_upload_time_expected = parse_http_date_to_datetime(
+        TEST_MENU_LAST_MODIFIED
+    )
+    assert most_recent_menu_upload_time_result == most_recent_menu_upload_time_expected
+
+
+@respx.mock
 def test_get_menu_data(test_menu_image: bytes) -> None:
     adapter = BuezeAdapter(page_url=settings.bueze.page_url)
 
