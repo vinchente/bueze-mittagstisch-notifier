@@ -34,7 +34,7 @@ class TelegramConfig(BaseModel):
     channel_id: int
 
 
-class FilenamesStorageConfig(BaseModel):
+class MenuArchiveConfig(BaseModel):
     name: str
 
 
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     bueze: BuezeConfig
     telegram: TelegramConfig
     logging: Optional[LoggingConfig] = None
-    filenames_storage: FilenamesStorageConfig
+    menu_archive: MenuArchiveConfig
 
     model_config = SettingsConfigDict(
         env_nested_delimiter="__", env_parse_none_str="None"

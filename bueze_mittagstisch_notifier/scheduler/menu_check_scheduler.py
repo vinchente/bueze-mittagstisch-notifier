@@ -2,7 +2,6 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import datetime, time, timedelta
-from pathlib import Path
 from time import sleep
 from typing import Optional
 from zoneinfo import ZoneInfo
@@ -14,9 +13,8 @@ from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     LinkTagNotFoundError,
 )
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
-from bueze_mittagstisch_notifier.storage.filenames import (
-    load_seen_files,
-    update_seen_filenames,
+from bueze_mittagstisch_notifier.storage.menu_file_data import (
+    MenuArchive,
 )
 
 LOGGER = logging.getLogger(__name__)
@@ -40,12 +38,12 @@ class MenuCheckScheduler:
         self,
         bueze_adapter: BuezeAdapter,
         telegram_notifier: TelegramNotifier,
-        filenames_path: Path,
+        menu_archive: MenuArchive,
         check_interval: float = 300,
     ) -> None:
         self._bueze_adapter = bueze_adapter
         self._telegram_notifier = telegram_notifier
-        self._filenames_path = filenames_path
+        self._menu_archive = menu_archive
         self._check_interval_seconds = check_interval
 
     async def run(self, max_iterations: Optional[int] = None) -> None:
@@ -61,24 +59,18 @@ class MenuCheckScheduler:
     async def _check_continuously_for_new_menu(self) -> None:
         while True:
             try:
-                menu_data = self._bueze_adapter.get_menu_data()
-
-                if menu_data.filename not in load_seen_files(
-                    filenames_path=self._filenames_path
-                ):
-                    LOGGER.info(f"New menu found: {menu_data.filename}")
-
+                if self._new_menu_is_available():
+                    menu_file_data = self._bueze_adapter.get_menu_file_data()
+                    LOGGER.info(f"New menu found: {menu_file_data.filename}")
                     await self._telegram_notifier.send_mittagstisch_menu_notification(
-                        menu_image=menu_data.content
+                        menu_image=menu_file_data.content
                     )
-                    update_seen_filenames(
-                        filename=menu_data.filename, filenames_path=self._filenames_path
+                    self._menu_archive.update_menu_archive(
+                        menu_file_data=menu_file_data,
                     )
                     break
                 else:
-                    LOGGER.info(
-                        f"{menu_data.filename} already sent, checking again later..."
-                    )
+                    LOGGER.info("No new menu found, checking again later...")
 
             except LinkTagNotFoundError as e:
                 LOGGER.error(f"LinkTagNotFoundError: {e}")
@@ -88,6 +80,16 @@ class MenuCheckScheduler:
                 LOGGER.warning(f"HTTP error: {e.response.status_code}")
 
             await asyncio.sleep(self._check_interval_seconds)
+
+    def _new_menu_is_available(self) -> bool:
+        most_recent_menu_upload_time = self._bueze_adapter.get_last_menu_upload_time()
+        most_recent_archived_menu_upload_time = (
+            self._menu_archive.get_most_recent_archived_menu_upload_time()
+        )
+        if most_recent_archived_menu_upload_time is None:
+            return True
+        else:
+            return most_recent_archived_menu_upload_time < most_recent_menu_upload_time
 
 
 def _wait_until_next_time_to_start_check_loop() -> None:

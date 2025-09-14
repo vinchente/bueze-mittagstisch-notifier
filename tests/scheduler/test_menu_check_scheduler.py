@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 from pathlib import Path
 from typing import Iterator
 from unittest.mock import AsyncMock, Mock, patch
@@ -7,46 +8,49 @@ import pytest
 
 from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     BuezeAdapter,
-    MenuData,
 )
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
 from bueze_mittagstisch_notifier.scheduler.menu_check_scheduler import (
     MenuCheckScheduler,
 )
-from bueze_mittagstisch_notifier.storage.filenames import load_seen_files
+from bueze_mittagstisch_notifier.storage.menu_file_data import (
+    MenuArchive,
+    MenuFileData,
+)
+from tests.conftest import TEST_MENU_FILE_DATA_1, TEST_MENU_FILE_DATA_2
 
 original_async_sleep = asyncio.sleep
 
 
 @pytest.fixture
-def mock_menu_sequence() -> Iterator[MenuData]:
-    menus_in_order_of_appearance = [
-        MenuData(
-            url="https://bueze-test.de/menu-1.png",
-            filename="menu-1.png",
-            last_modified="Fri, 5 Sep 2025 10:15:30 GMT",
-            content=b"fake-png-bytes-1",
-        ),
-        MenuData(
-            url="https://bueze-test.de/menu-1.png",
-            filename="menu-1.png",
-            last_modified="Fri, 5 Sep 2025 10:15:30 GMT",
-            content=b"fake-png-bytes-1",
-        ),
-        MenuData(
-            url="https://bueze-test.de/menu-1.png",
-            filename="menu-2.png",
-            last_modified="Fri, 12 Sep 2025 10:15:30 GMT",
-            content=b"fake-png-bytes-2",
-        ),
+def mock_menu_sequence() -> Iterator[MenuFileData]:
+    menu_file_data_in_order_of_appearance = [
+        TEST_MENU_FILE_DATA_1,
+        TEST_MENU_FILE_DATA_2,
     ]
-    return iter(menus_in_order_of_appearance)
+    return iter(menu_file_data_in_order_of_appearance)
 
 
 @pytest.fixture
-def mock_bueze_adapter(mock_menu_sequence: Iterator[MenuData]) -> Mock:
+def mock_upload_time_sequence() -> Iterator[datetime]:
+    menu_file_data_in_order_of_appearance = [
+        TEST_MENU_FILE_DATA_1.upload_time,
+        TEST_MENU_FILE_DATA_1.upload_time,
+        TEST_MENU_FILE_DATA_2.upload_time,
+    ]
+    return iter(menu_file_data_in_order_of_appearance)
+
+
+@pytest.fixture
+def mock_bueze_adapter(
+    mock_menu_sequence: Iterator[MenuFileData],
+    mock_upload_time_sequence: Iterator[datetime],
+) -> Mock:
     mock_adapter = Mock(spec=BuezeAdapter)
-    mock_adapter.get_menu_data.side_effect = lambda: next(mock_menu_sequence)
+    mock_adapter.get_menu_file_data.side_effect = lambda: next(mock_menu_sequence)
+    mock_adapter.get_last_menu_upload_time.side_effect = lambda: next(
+        mock_upload_time_sequence
+    )
 
     return mock_adapter
 
@@ -73,7 +77,7 @@ async def test_menu_check_scheduler_run(
     menu_check_scheduler = MenuCheckScheduler(
         bueze_adapter=mock_bueze_adapter,
         telegram_notifier=mock_telegram_notifier,
-        filenames_path=tmp_seen_filenames,
+        menu_archive=MenuArchive(menu_archive_path=tmp_seen_filenames),
         check_interval=0.001,
     )
 
@@ -86,15 +90,18 @@ async def test_menu_check_scheduler_run(
     ):
         await menu_check_scheduler.run(max_iterations=2)
 
-    sent_menus = [
+    sent_menu_image_bytes = [
         call.kwargs["menu_image"]
         for call in mock_telegram_notifier.send_mittagstisch_menu_notification.await_args_list
     ]
-    assert sent_menus == [b"fake-png-bytes-1", b"fake-png-bytes-2"]
+    assert sent_menu_image_bytes == [
+        TEST_MENU_FILE_DATA_1.content,
+        TEST_MENU_FILE_DATA_2.content,
+    ]
 
-    seen = load_seen_files(tmp_seen_filenames)
-    assert seen == {"menu-1.png", "menu-2.png"}
+    menu_file_data_set = menu_check_scheduler._menu_archive.load_menu_archive()
+    assert menu_file_data_set == {TEST_MENU_FILE_DATA_1, TEST_MENU_FILE_DATA_2}
 
     assert "New menu found: menu-1.png" in caplog.text
-    assert "menu-1.png already sent, checking again later..." in caplog.text
+    assert "No new menu found, checking again later..." in caplog.text
     assert "New menu found: menu-2.png" in caplog.text
