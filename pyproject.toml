@@ -24,7 +24,8 @@ dev = [
     "pytest-socket>=0.7.0",
     "pytest-asyncio==1.1.*",
     "types-PyYAML",
-    "types-pytz"
+    "types-pytz",
+    "types-setuptools"
 ]
 
 [tool.uv]
