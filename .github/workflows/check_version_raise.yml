@@ -1,0 +1,24 @@
+name: Check version raise
+
+on:
+  pull_request:
+    branches:
+      - main
+jobs:
+  check-version-raise:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: feature
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: feature/pyproject.toml
+      - name: Check that versions differ
+        run: |
+            python feature/.github/support-scripts/assert_version_raised.py

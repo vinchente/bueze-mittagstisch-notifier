@@ -1,0 +1,31 @@
+name: Test pull request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-pull-request:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Install uv
+        run: |
+          pip install uv
+
+      - name: Install dependencies using uv
+        run: |
+          uv sync --locked --all-extras
+
+      - name: Run tests with "invoke test"
+        run: |
+          uv run invoke test

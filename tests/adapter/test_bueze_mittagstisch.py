@@ -12,6 +12,7 @@ from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     MenuData,
 )
 from bueze_mittagstisch_notifier.config import settings
+from bueze_mittagstisch_notifier.utils import parse_http_date_to_datetime
 
 LOGGER = logging.getLogger(__name__)
 
