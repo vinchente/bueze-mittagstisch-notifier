@@ -56,7 +56,6 @@ files = ["bueze_mittagstisch_notifier", "tests"]
 strict = true
 implicit_reexport = true
 ignore_missing_imports = true
-non_interactive = true
 enable_error_code = ["ignore-without-code"]
 plugins = ["pydantic.mypy"]
 install_types = false
