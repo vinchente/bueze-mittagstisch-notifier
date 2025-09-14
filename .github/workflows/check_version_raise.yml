@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: pyproject.toml
+          python-version-file: feature/pyproject.toml
       - name: Check that versions differ
         run: |
             python feature/.github/support-scripts/assert_version_raised.py
