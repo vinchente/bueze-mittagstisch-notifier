@@ -21,7 +21,6 @@ COPY --from=builder /app/.venv /app/.venv
 
 COPY pyproject.toml pyproject.toml
 COPY bueze_mittagstisch_notifier bueze_mittagstisch_notifier
-COPY data data
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONPATH=/app

@@ -8,6 +8,8 @@ LOGGER = logging.getLogger(__name__)
 
 
 def get_menu_archive_path(menu_archive_name: str) -> Path:
+    if Path("/data").exists():
+        return Path("/data") / menu_archive_name
     return Path(__file__).parent.parent / "data" / menu_archive_name
 
 
