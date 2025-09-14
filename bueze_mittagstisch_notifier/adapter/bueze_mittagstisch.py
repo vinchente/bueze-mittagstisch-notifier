@@ -1,15 +1,13 @@
-import hashlib
 import logging
 from datetime import datetime
 from typing import Optional
 from urllib.parse import urljoin
-from zoneinfo import ZoneInfo
 
 import httpx
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from pydantic import BaseModel, field_validator
 
+from bueze_mittagstisch_notifier.storage.menu_file_data import MenuFileData
 from bueze_mittagstisch_notifier.utils import parse_http_date_to_datetime
 
 LOGGER = logging.getLogger(__name__)
@@ -17,21 +15,6 @@ LOGGER = logging.getLogger(__name__)
 
 class LinkTagNotFoundError(Exception):
     pass
-
-
-class MenuData(BaseModel):
-    url: str
-    filename: str
-    last_modified: datetime
-    content: bytes
-
-    @field_validator("last_modified", mode="before")  # ruff: noqa
-    def parse_last_modified(cls, v: str) -> datetime:
-        return _parse_last_updated_string_to_datetime(last_modified_string=v)
-
-    @property
-    def hash(self) -> str:
-        return hashlib.sha256(self.content).hexdigest()
 
 
 class BuezeAdapter:
@@ -45,7 +28,7 @@ class BuezeAdapter:
             last_modified_string = head_resp.headers.get("Last-Modified")
         return parse_http_date_to_datetime(last_modified_string=last_modified_string)
 
-    def get_menu_data(self) -> MenuData:
+    def get_menu_file_data(self) -> MenuFileData:
         menu_url = self.get_menu_url()
         filename = menu_url.rsplit("/", 1)[-1]
 
@@ -53,10 +36,12 @@ class BuezeAdapter:
             png_resp = client.get(menu_url)
             png_resp.raise_for_status()
 
-        return MenuData(
+        return MenuFileData(
             url=menu_url,
             filename=filename,
-            last_modified=png_resp.headers.get("last-modified"),
+            upload_time=parse_http_date_to_datetime(
+                last_modified_string=png_resp.headers.get("Last-Modified")
+            ),
             content=png_resp.content,
         )
 
@@ -82,7 +67,6 @@ class BuezeAdapter:
             raise RuntimeError("Found <a> tag without a valid href")
 
         png_url = urljoin(self._page_url, href)
-        LOGGER.info(f"Found PNG URL: {png_url}")
         return png_url
 
     def get_and_save_menu(
@@ -90,7 +74,7 @@ class BuezeAdapter:
         output_dir: Optional[str] = None,
         file_name: Optional[str] = None,
     ) -> None:
-        menu_data = self.get_menu_data()
+        menu_data = self.get_menu_file_data()
 
         if not file_name:
             file_name = menu_data.filename
@@ -103,9 +87,3 @@ class BuezeAdapter:
         with open(output_path, "wb") as f:
             f.write(menu_data.content)
         LOGGER.info(f"Menu downloaded to {output_path}")
-
-
-def _parse_last_updated_string_to_datetime(last_modified_string: str) -> datetime:
-    return datetime.strptime(last_modified_string, "%a, %d %b %Y %H:%M:%S GMT").replace(
-        tzinfo=ZoneInfo("UTC")
-    )

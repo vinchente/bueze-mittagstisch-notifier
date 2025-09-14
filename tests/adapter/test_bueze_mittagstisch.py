@@ -9,9 +9,9 @@ from _pytest.monkeypatch import MonkeyPatch
 from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     BuezeAdapter,
     LinkTagNotFoundError,
-    MenuData,
 )
 from bueze_mittagstisch_notifier.config import settings
+from bueze_mittagstisch_notifier.storage.menu_file_data import MenuFileData
 from bueze_mittagstisch_notifier.utils import parse_http_date_to_datetime
 
 LOGGER = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ def test_get_last_menu_upload_time() -> None:
 
 
 @respx.mock
-def test_get_menu_data(test_menu_image: bytes) -> None:
+def test_get_menu_file_data(test_menu_image: bytes) -> None:
     adapter = BuezeAdapter(page_url=settings.bueze.page_url)
 
     respx.get(settings.bueze.page_url).mock(
@@ -64,7 +64,7 @@ def test_get_menu_data(test_menu_image: bytes) -> None:
         )
     )
 
-    result_menu_data = adapter.get_menu_data()
+    result_menu_data = adapter.get_menu_file_data()
 
     assert result_menu_data.content == test_menu_image
     assert result_menu_data.filename == TEST_MENU_FILENAME
@@ -89,11 +89,11 @@ def test_get_and_save_menu(
 
     monkeypatch.setattr(
         adapter,
-        "get_menu_data",
-        lambda: MenuData(
+        "get_menu_file_data",
+        lambda: MenuFileData(
             url=TEST_MENU_URL,
             filename=TEST_MENU_FILENAME,
-            last_modified=TEST_MENU_LAST_MODIFIED,
+            upload_time=parse_http_date_to_datetime(TEST_MENU_LAST_MODIFIED),
             content=test_menu_image,
         ),
     )

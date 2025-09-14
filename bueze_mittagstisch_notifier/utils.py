@@ -7,8 +7,8 @@ from zoneinfo import ZoneInfo
 LOGGER = logging.getLogger(__name__)
 
 
-def get_filenames_path(filenames_json: str) -> Path:
-    return Path(__file__).parent.parent / "data" / filenames_json
+def get_menu_archive_path(menu_archive_name: str) -> Path:
+    return Path(__file__).parent.parent / "data" / menu_archive_name
 
 
 def setup_logging_console(
