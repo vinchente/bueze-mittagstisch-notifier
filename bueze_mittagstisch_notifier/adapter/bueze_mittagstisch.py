@@ -10,6 +10,8 @@ from bs4 import BeautifulSoup
 from bs4.element import Tag
 from pydantic import BaseModel, field_validator
 
+from bueze_mittagstisch_notifier.utils import parse_http_date_to_datetime
+
 LOGGER = logging.getLogger(__name__)
 
 
