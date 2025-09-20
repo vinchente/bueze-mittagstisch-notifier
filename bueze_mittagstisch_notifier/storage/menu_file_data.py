@@ -40,20 +40,11 @@ class MenuArchive:
         self.files: dict[str, list[MenuFileData]] = {}
         self.latest_upload_time: Optional[datetime] = None
 
-    def load_filenames(self) -> set[str]:
-        seen_menu_file_data_set = self.load_menu_archive()
-        seen_filenames = {
-            menu_file_data.filename for menu_file_data in seen_menu_file_data_set
-        }
-        return seen_filenames
-
     def load_menu_archive(self) -> set[MenuFileData]:
         if self._menu_archive_path.exists():
             with open(self._menu_archive_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            menu_file_data_set = {
-                MenuFileData.model_validate(d) for d in data["menu_files"]
-            }
+            menu_file_data_set = {MenuFileData.model_validate(d) for d in data}
             return menu_file_data_set
         return set()
 
@@ -61,7 +52,6 @@ class MenuArchive:
         seen_menu_file_data_set = self.load_menu_archive()
         seen_menu_file_data_set.add(menu_file_data)
         self._save_menu_file_data_set(menu_file_data_set=seen_menu_file_data_set)
-        LOGGER.info(f"Menu archive updated with {menu_file_data.filename}")
 
     def get_most_recent_archived_menu_upload_time(self) -> Optional[datetime]:
         if self._menu_archive_path.exists():
@@ -75,6 +65,10 @@ class MenuArchive:
             return most_recent_time
         return None
 
+    def contains(self, menu_file_data: MenuFileData) -> bool:
+        seen_menu_file_data_set = self.load_menu_archive()
+        return any(m.hash == menu_file_data.hash for m in seen_menu_file_data_set)
+
     def _save_menu_file_data_set(self, menu_file_data_set: set[MenuFileData]) -> None:
         self._menu_archive_path.parent.mkdir(parents=True, exist_ok=True)
         json_serialized_menu_file_data_set = [
@@ -82,9 +76,7 @@ class MenuArchive:
         ]
         with open(self._menu_archive_path, "w", encoding="utf-8") as f:
             json.dump(
-                {
-                    "menu_files": json_serialized_menu_file_data_set,
-                },
+                json_serialized_menu_file_data_set,
                 f,
                 indent=2,
             )
