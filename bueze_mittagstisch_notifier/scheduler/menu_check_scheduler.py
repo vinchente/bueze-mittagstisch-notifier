@@ -68,6 +68,7 @@ class MenuCheckScheduler:
                     self._menu_archive.update_menu_archive(
                         menu_file_data=menu_file_data,
                     )
+                    LOGGER.info(f"Menu archive updated with {menu_file_data.filename}")
                     break
                 else:
                     LOGGER.info("No new menu found, checking again later...")

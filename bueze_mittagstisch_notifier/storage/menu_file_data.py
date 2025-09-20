@@ -61,7 +61,6 @@ class MenuArchive:
         seen_menu_file_data_set = self.load_menu_archive()
         seen_menu_file_data_set.add(menu_file_data)
         self._save_menu_file_data_set(menu_file_data_set=seen_menu_file_data_set)
-        LOGGER.info(f"Menu archive updated with {menu_file_data.filename}")
 
     def get_most_recent_archived_menu_upload_time(self) -> Optional[datetime]:
         if self._menu_archive_path.exists():

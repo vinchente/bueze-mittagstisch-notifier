@@ -57,6 +57,3 @@ def test_update_menu_archive(tmp_path: Path, caplog: pytest.LogCaptureFixture) -
     menu_file_data_set = menu_archive.load_menu_archive()
     assert TEST_MENU_FILE_DATA_3 in menu_file_data_set
     assert TEST_MENU_FILE_DATA_4 in menu_file_data_set
-
-    assert "Menu archive updated with menu-3.png" in caplog.text
-    assert "Menu archive updated with menu-4.png" in caplog.text

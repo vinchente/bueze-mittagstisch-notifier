@@ -103,5 +103,7 @@ async def test_menu_check_scheduler_run(
     assert menu_file_data_set == {TEST_MENU_FILE_DATA_1, TEST_MENU_FILE_DATA_2}
 
     assert "New menu found: menu-1.png" in caplog.text
+    assert "Menu archive updated with menu-1.png" in caplog.text
     assert "No new menu found, checking again later..." in caplog.text
     assert "New menu found: menu-2.png" in caplog.text
+    assert "Menu archive updated with menu-2.png" in caplog.text
