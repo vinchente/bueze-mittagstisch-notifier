@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 BERLIN = ZoneInfo("Europe/Berlin")
 SECONDS_PER_HOUR = 3600
-LOGGING_INTERVAL_IN_SECONDS_WHILE_WAITING = 3600
+LOGGING_INTERVAL_IN_SECONDS_WHILE_WAITING = 3600 * 6
 
 
 @dataclass(frozen=True)
@@ -49,7 +49,7 @@ class MenuCheckScheduler:
     async def run(self, max_iterations: Optional[int] = None) -> None:
         iterations = 0
         while max_iterations is None or iterations < max_iterations:
-            _wait_until_next_time_to_start_check_loop()
+            # _wait_until_next_time_to_start_check_loop()
             LOGGER.info("Checking for new menu...")
 
             await self._check_continuously_for_new_menu()
@@ -59,30 +59,45 @@ class MenuCheckScheduler:
     async def _check_continuously_for_new_menu(self) -> None:
         while True:
             try:
-                if self._new_menu_is_available():
+                if self._new_menu_file_was_uploaded():
+                    LOGGER.info("New menu upload found")
                     menu_file_data = self._bueze_adapter.get_menu_file_data()
-                    LOGGER.info(f"New menu found: {menu_file_data.filename}")
-                    await self._telegram_notifier.send_mittagstisch_menu_notification(
-                        menu_image=menu_file_data.content
-                    )
-                    self._menu_archive.update_menu_archive(
-                        menu_file_data=menu_file_data,
-                    )
-                    LOGGER.info(f"Menu archive updated with {menu_file_data.filename}")
-                    break
+
+                    if self._menu_archive.contains(menu_file_data=menu_file_data):
+                        # I expect this case to be so unlikely that I think it's okay to not handle this
+                        # in any special way and just go on with the checks even if it would mean running
+                        # into this multiple times until there is an actual upload after all.
+                        LOGGER.info(
+                            "Most recent uploaded menu was already sent at an earlier time"
+                        )
+                    else:
+                        LOGGER.info(f"New menu found: {menu_file_data.filename}")
+                        await (
+                            self._telegram_notifier.send_mittagstisch_menu_notification(
+                                menu_image=menu_file_data.content
+                            )
+                        )
+                        LOGGER.info("New menu successfully sent to Telegram")
+                        self._menu_archive.update_menu_archive(
+                            menu_file_data=menu_file_data,
+                        )
+                        LOGGER.info(
+                            f"Menu archive updated with {menu_file_data.filename}"
+                        )
+                        break
                 else:
                     LOGGER.info("No new menu found, checking again later...")
 
-            except LinkTagNotFoundError as e:
-                LOGGER.error(f"LinkTagNotFoundError: {e}")
-            except httpx.RequestError as e:
-                LOGGER.error(f"Network error: {e}, retrying...")
             except httpx.HTTPStatusError as e:
                 LOGGER.warning(f"HTTP error: {e.response.status_code}")
+            except httpx.RequestError as e:
+                LOGGER.error(f"Network error: {e}, retrying...")
+            except LinkTagNotFoundError as e:
+                LOGGER.error(f"LinkTagNotFoundError: {e}")
 
             await asyncio.sleep(self._check_interval_seconds)
 
-    def _new_menu_is_available(self) -> bool:
+    def _new_menu_file_was_uploaded(self) -> bool:
         most_recent_menu_upload_time = self._bueze_adapter.get_last_menu_upload_time()
         most_recent_archived_menu_upload_time = (
             self._menu_archive.get_most_recent_archived_menu_upload_time()

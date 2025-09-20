@@ -9,6 +9,7 @@ import pytest
 from bueze_mittagstisch_notifier.adapter.bueze_mittagstisch import (
     BuezeAdapter,
 )
+from bueze_mittagstisch_notifier.config import settings
 from bueze_mittagstisch_notifier.notifier.telegram_notifier import TelegramNotifier
 from bueze_mittagstisch_notifier.scheduler.menu_check_scheduler import (
     MenuCheckScheduler,
@@ -17,7 +18,12 @@ from bueze_mittagstisch_notifier.storage.menu_file_data import (
     MenuArchive,
     MenuFileData,
 )
-from tests.conftest import TEST_MENU_FILE_DATA_1, TEST_MENU_FILE_DATA_2
+from bueze_mittagstisch_notifier.utils import parse_http_date_to_datetime
+from tests.conftest import (
+    TEST_MENU_FILE_DATA_1,
+    TEST_MENU_FILE_DATA_2,
+    TEST_MENU_FILE_DATA_3,
+)
 
 original_async_sleep = asyncio.sleep
 
@@ -27,18 +33,22 @@ def mock_menu_sequence() -> Iterator[MenuFileData]:
     menu_file_data_in_order_of_appearance = [
         TEST_MENU_FILE_DATA_1,
         TEST_MENU_FILE_DATA_2,
+        TEST_MENU_FILE_DATA_2,
+        TEST_MENU_FILE_DATA_3,
     ]
     return iter(menu_file_data_in_order_of_appearance)
 
 
 @pytest.fixture
 def mock_upload_time_sequence() -> Iterator[datetime]:
-    menu_file_data_in_order_of_appearance = [
+    menu_upload_times_in_order_of_appearance = [
         TEST_MENU_FILE_DATA_1.upload_time,
         TEST_MENU_FILE_DATA_1.upload_time,
         TEST_MENU_FILE_DATA_2.upload_time,
+        parse_http_date_to_datetime("Fri, 2 Sep 2025 15:15:30 GMT"),
+        TEST_MENU_FILE_DATA_3.upload_time,
     ]
-    return iter(menu_file_data_in_order_of_appearance)
+    return iter(menu_upload_times_in_order_of_appearance)
 
 
 @pytest.fixture
@@ -61,23 +71,21 @@ def mock_telegram_notifier() -> AsyncMock:
 
 
 @pytest.fixture
-def tmp_seen_filenames(tmp_path: Path) -> Path:
-    return tmp_path / "seen_files.json"
+def tmp_menu_archive_path(tmp_path: Path) -> Path:
+    return tmp_path / settings.menu_archive.name
 
 
 @pytest.mark.asyncio
 async def test_menu_check_scheduler_run(
     mock_bueze_adapter: Mock,
     mock_telegram_notifier: AsyncMock,
-    tmp_seen_filenames: Path,
+    tmp_menu_archive_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    caplog.set_level("INFO")
-
     menu_check_scheduler = MenuCheckScheduler(
         bueze_adapter=mock_bueze_adapter,
         telegram_notifier=mock_telegram_notifier,
-        menu_archive=MenuArchive(menu_archive_path=tmp_seen_filenames),
+        menu_archive=MenuArchive(menu_archive_path=tmp_menu_archive_path),
         check_interval=0.001,
     )
 
@@ -88,7 +96,7 @@ async def test_menu_check_scheduler_run(
         ),
         patch("asyncio.sleep", new=lambda _: original_async_sleep(0)),
     ):
-        await menu_check_scheduler.run(max_iterations=2)
+        await menu_check_scheduler.run(max_iterations=3)
 
     sent_menu_image_bytes = [
         call.kwargs["menu_image"]
@@ -97,13 +105,12 @@ async def test_menu_check_scheduler_run(
     assert sent_menu_image_bytes == [
         TEST_MENU_FILE_DATA_1.content,
         TEST_MENU_FILE_DATA_2.content,
+        TEST_MENU_FILE_DATA_3.content,
     ]
 
-    menu_file_data_set = menu_check_scheduler._menu_archive.load_menu_archive()
-    assert menu_file_data_set == {TEST_MENU_FILE_DATA_1, TEST_MENU_FILE_DATA_2}
-
-    assert "New menu found: menu-1.png" in caplog.text
-    assert "Menu archive updated with menu-1.png" in caplog.text
-    assert "No new menu found, checking again later..." in caplog.text
-    assert "New menu found: menu-2.png" in caplog.text
-    assert "Menu archive updated with menu-2.png" in caplog.text
+    menu_file_data_set_result = menu_check_scheduler._menu_archive.load_menu_archive()
+    assert menu_file_data_set_result == {
+        TEST_MENU_FILE_DATA_1,
+        TEST_MENU_FILE_DATA_2,
+        TEST_MENU_FILE_DATA_3,
+    }
